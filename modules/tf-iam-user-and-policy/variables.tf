@@ -1,3 +1,7 @@
+####################################################
+# IAM Users Variable
+# - Map of IAM user names and their roles
+####################################################
 variable "iam_users" {
   description = "Map of IAM users and their roles"
   type        = map(string)
@@ -8,11 +12,3 @@ variable "iam_users" {
   }
 }
 
-resource "aws_iam_user" "users" {
-  for_each = var.iam_users
-  name     = each.key
-
-  tags = {
-    team = each.value
-  }
-}

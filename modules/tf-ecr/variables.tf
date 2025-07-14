@@ -1,25 +1,34 @@
-
+#################################################
+#                   VARIABLES                   #
+#                   for EC2                     #
+#################################################
 
 variable "key_name" {
   description = "The name of the SSH key pair"
   type        = string
-  default     = "project_dev" # Default value if not specified
+  default     = "project_dev"
 }
 
 variable "instance_count" {
   description = "The number of EC2 instances to launch"
   type        = number
-  default     = 1 # Default to 1 instance
+  default     = 1
 }
 
 variable "ami" {
   description = "The AMI to use for the EC2 instance"
   type        = string
-  default     = "ami-020cba7c55df1f615" # Default Ubuntu AMI, you can change this if needed
+  default     = "ami-020cba7c55df1f615"
+}
+
+variable "instance_type" {
+  description = "The instance type for EC2 instances"
+  type        = string
+  default     = "t2.micro"
 }
 
 variable "instance_name_tag" {
   description = "The Name tag for the EC2 instance"
   type        = string
-  default     = "raz_ec2-instance" # Default name for the instance
+  default     = "raz_ec2-instance"
 }

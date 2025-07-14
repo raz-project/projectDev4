@@ -1,8 +1,16 @@
-# Use the default VPC
+####################################################
+# Use Default VPC Data Source
+# - Fetches default VPC ID for security group association
+####################################################
 data "aws_vpc" "default" {
   default = true
 }
 
+####################################################
+# Security Group Resource
+# - Creates a security group in the default VPC
+# - Applies dynamic ingress and egress rules from variables
+####################################################
 resource "aws_security_group" "open_port" {
   name        = var.sg_name
   description = "Security group managed by Terraform"
@@ -34,5 +42,15 @@ resource "aws_security_group" "open_port" {
     Name        = var.sg_name
     Environment = var.environment
     ManagedBy   = var.managed_by
+  }
+}
+
+####################################################
+# Reminder Local Exec Resource
+# - Prints reminder to run configurePolicy.py script
+####################################################
+resource "null_resource" "reminder_to_run_script" {
+  provisioner "local-exec" {
+    command = "echo 'Hit the script inside tf-security-group: python configurePolicy.py'"
   }
 }

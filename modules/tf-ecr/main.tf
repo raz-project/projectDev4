@@ -2,37 +2,49 @@ provider "aws" {
   region = "us-east-1"
 }
 
+####################################################
+# TLS Private Key for SSH
+####################################################
 
-
-# Generate a TLS private key for SSH
 resource "tls_private_key" "ssh_key" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
-# Create an AWS Key Pair using the generated public key
+####################################################
+# AWS Key Pair using generated public key
+####################################################
+
 resource "aws_key_pair" "user_key" {
-  key_name   = var.key_name # Use the variable defined in variables.tf
+  key_name   = var.key_name
   public_key = tls_private_key.ssh_key.public_key_openssh
 }
 
-# Save the private key locally as a PEM file
+####################################################
+# Save private key locally as PEM file
+####################################################
+
 resource "local_file" "private_key_pem" {
   content         = tls_private_key.ssh_key.private_key_pem
   filename        = "${path.module}/${var.key_name}.pem"
   file_permission = "0600"
 }
 
-# Fetch the default VPC in the region
+####################################################
+# Fetch Default VPC
+####################################################
+
 data "aws_vpc" "default" {
   default = true
 }
 
+####################################################
+# Security Group for SSH and HTTP
+####################################################
 
-# Create a Security Group allowing SSH and HTTP traffic
 resource "aws_security_group" "web_shh" {
-  count       = var.instance_count           # Add dynamic security groups if multiple instances
-  name        = "ssh-key-${count.index + 1}" # Dynamically set the name for each SG
+  count       = var.instance_count
+  name        = "ssh-key-${count.index + 1}"
   description = "Allow SSH traffic and HTTP"
   vpc_id      = data.aws_vpc.default.id
 
@@ -51,13 +63,16 @@ resource "aws_security_group" "web_shh" {
   }
 }
 
-# Launch EC2 instances with the specified security group and SSH key
+####################################################
+# Launch EC2 instances with SSH key and Security Group
+####################################################
+
 resource "aws_instance" "ubuntu_instance" {
-  count                  = var.instance_count # Dynamically set the number of instances
-  ami                    = var.ami            # Dynamically set the AMI
-  instance_type          = "t2.micro"
+  count                  = var.instance_count
+  ami                    = var.ami
+  instance_type          = var.instance_type
   key_name               = aws_key_pair.user_key.key_name
-  vpc_security_group_ids = [aws_security_group.web_shh[count.index].id] # Link dynamic SG with instance
+  vpc_security_group_ids = [aws_security_group.web_shh[count.index].id]
 
   associate_public_ip_address = true
 
@@ -71,18 +86,6 @@ resource "aws_instance" "ubuntu_instance" {
               EOF
 
   tags = {
-    Name = "${var.instance_name_tag}-${count.index + 1}" # Dynamically set instance name tag
+    Name = "${var.instance_name_tag}-${count.index + 1}"
   }
-}
-
-# Output the public IPs of all EC2 instances
-output "ec2_public_ips" {
-  description = "Public IPs of EC2 instances"
-  value       = [for instance in aws_instance.ubuntu_instance : instance.public_ip]
-}
-
-# Output the path to the saved private key
-output "private_key_path" {
-  description = "Path to the generated private key file"
-  value       = local_file.private_key_pem.filename
 }

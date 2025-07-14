@@ -1,24 +1,39 @@
+####################################################
+# AWS Provider Configuration
+# - Sets AWS region for this module
+####################################################
 provider "aws" {
   region = "us-east-1"
 }
 
-# Define the S3 bucket resource
+####################################################
+# S3 Bucket Resource
+# - Creates S3 bucket for hosting static website
+# - Enables force destroy for cleanup
+####################################################
 resource "aws_s3_bucket" "my_bucket" {
   bucket        = var.bucket_name
   force_destroy = true
 }
 
-# Configure Block Public Access settings for the bucket
+####################################################
+# S3 Bucket Public Access Block
+# - Controls public access settings for bucket
+####################################################
 resource "aws_s3_bucket_public_access_block" "my_bucket_public_access_block" {
   bucket = aws_s3_bucket.my_bucket.id
 
-  block_public_acls       = false # Allow public ACLs (Optional)
-  block_public_policy     = false # Allow public policies
-  ignore_public_acls      = false # Don't ignore public ACLs
-  restrict_public_buckets = false # Don't restrict public buckets
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
 }
 
-# S3 Website Configuration (Enable Static Website Hosting)
+####################################################
+# S3 Bucket Website Configuration
+# - Enables static website hosting on the bucket
+# - Defines index and error documents
+####################################################
 resource "aws_s3_bucket_website_configuration" "my_website" {
   bucket = aws_s3_bucket.my_bucket.bucket
 
@@ -31,7 +46,11 @@ resource "aws_s3_bucket_website_configuration" "my_website" {
   }
 }
 
-# Bucket Policy for Public Read
+####################################################
+# S3 Bucket Policy
+# - Grants public read access to bucket objects
+# - Depends on public access block resource
+####################################################
 resource "aws_s3_bucket_policy" "public_read" {
   bucket = aws_s3_bucket.my_bucket.bucket
 
@@ -47,35 +66,38 @@ resource "aws_s3_bucket_policy" "public_read" {
       }
     ]
   })
+
+  depends_on = [aws_s3_bucket_public_access_block.my_bucket_public_access_block]
 }
 
-# Upload static content (index.html, error.html, styles.css, script.js)
+####################################################
+# Static Website Files Upload
+# - Uploads index.html, error.html, CSS, and JS files
+####################################################
 resource "aws_s3_object" "index" {
   bucket       = aws_s3_bucket.my_bucket.bucket
   key          = "index.html"
-  source       = "./index.html"
+  source       = "${path.module}/index.html"
   content_type = "text/html"
 }
 
 resource "aws_s3_object" "error" {
   bucket       = aws_s3_bucket.my_bucket.bucket
   key          = "error.html"
-  source       = "./error.html"
+  source       = "${path.module}/error.html"
   content_type = "text/html"
 }
 
 resource "aws_s3_object" "css" {
   bucket       = aws_s3_bucket.my_bucket.bucket
   key          = "styles.css"
-  source       = "./styles.css"
+  source       = "${path.module}/styles.css"
   content_type = "text/css"
 }
 
 resource "aws_s3_object" "js" {
   bucket       = aws_s3_bucket.my_bucket.bucket
   key          = "script.js"
-  source       = "./script.js"
+  source       = "${path.module}/script.js"
   content_type = "application/javascript"
 }
-
-
