@@ -1,0 +1,77 @@
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body styling */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Vertically center content */
+    align-items: center; /* Horizontally center content */
+    height: 100vh; /* Full viewport height */
+    text-align: center;
+    padding: 0 20px; /* Padding to prevent content touching the edges */
+}
+
+/* Centered container for all content */
+#content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+/* Header styling */
+h1 {
+    font-size: 3em;
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+/* Button styling */
+button {
+    font-size: 1.5em;
+    padding: 15px 30px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 20px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+/* Styling for the second button that is hidden initially */
+#secondButton {
+    display: none;
+}
+
+/* Image container styling */
+#imageContainer {
+    margin-top: 30px;
+    max-width: 90%;
+}
+
+/* Image styling */
+#image {
+    width: 800px; /* Significantly larger image */
+    height: auto;
+    border-radius: 15px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Add some margin between buttons and the image */
+#secondButton, #imageContainer {
+    margin-top: 30px;
+}
