@@ -2,26 +2,21 @@ pipeline {
     agent any
 
     environment {
+        // Initialize PYTHON_PATH as empty, will be set in the pipeline
         PYTHON_PATH = ''
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                checkout([$class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/raz-project/projectDev4.git',
-                        credentialsId: 'github-raz' // make sure this credential exists in Jenkins
-                    ]]
-                ])
+                checkout scm
             }
         }
 
         stage('Install Python') {
             steps {
                 script {
-                    // Check for Python executable path - adjust if needed
+                    // Capture the full path to python.exe
                     def pythonPath = bat(script: 'where python', returnStdout: true).trim()
                     if (!pythonPath) {
                         error 'Python executable not found on PATH!'
@@ -38,6 +33,7 @@ pipeline {
                     if (!env.PYTHON_PATH) {
                         error 'PYTHON_PATH environment variable not set!'
                     }
+                    // Run python --version using the full path
                     bat "\"${env.PYTHON_PATH}\" --version"
                 }
             }
@@ -45,14 +41,17 @@ pipeline {
 
         stage('Setup Terraform') {
             steps {
-                script {
-                    try {
-                        bat 'terraform init'
-                        bat 'terraform apply -auto-approve'
-                    } catch (err) {
-                        error "Terraform failed: ${err}"
-                    }
-                }
+                echo 'Terraform setup steps go here.'
+                // Add your terraform init commands
+                // Example: bat 'terraform init'
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                echo 'Terraform apply steps go here.'
+                // Add your terraform apply commands
+                // Example: bat 'terraform apply -auto-approve'
             }
         }
     }
@@ -63,3 +62,4 @@ pipeline {
         }
     }
 }
+
