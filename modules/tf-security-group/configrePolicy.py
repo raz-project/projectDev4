@@ -35,7 +35,7 @@ def build_ingress_rules(ingress_str):
             except Exception as e:
                 print(f"Invalid custom rule: {entry} — {e}")
         else:
-            print(f"⚠️ Skipping unknown rule type: {entry}")
+            print(f"Skipping unknown rule type: {entry}")
     return rules
 
 def main():
@@ -61,14 +61,14 @@ def main():
     with open("terraform.tfvars.json", "w") as f:
         json.dump(tfvars, f, indent=2)
 
-    print("✅ terraform.tfvars.json created")
+    print("terraform.tfvars.json created")
     print(json.dumps(tfvars, indent=2))
 
-    # Run terraform init first to fix provider lock issue
+    # Initialize terraform (fixes lock file / provider issue)
     subprocess.run(["terraform", "init"], check=True)
 
-    # Then apply terraform with the variables file
-    subprocess.run(["terraform", "apply", "-var-file=terraform.tfvars.json"], check=True)
+    # Apply terraform changes automatically without confirmation
+    subprocess.run(["terraform", "apply", "-auto-approve", "-var-file=terraform.tfvars.json"], check=True)
 
 if __name__ == "__main__":
     main()
