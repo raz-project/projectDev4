@@ -16,10 +16,23 @@ pipeline {
             }
         }
 
+        stage('Install Python with Chocolatey') {
+            steps {
+                bat '''
+                    echo Checking for Chocolatey...
+                    choco -v
+                    echo Installing Python if not present...
+                    choco install -y python --force
+                    refreshenv
+                    python --version
+                '''
+            }
+        }
+
         stage('Check Python') {
             steps {
                 bat '''
-                    echo Checking Python version...
+                    echo Verifying Python installation...
                     where python
                     python --version
                 '''
