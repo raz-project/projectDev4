@@ -1,4 +1,3 @@
-//for win os
 pipeline {
     agent any
 
@@ -16,6 +15,29 @@ pipeline {
                     credentialsId: 'github-raz'
             }
         }
+
+        stage('Check Python') {
+            steps {
+                bat '''
+                    echo Checking Python version...
+                    where python
+                    python --version
+                '''
+            }
+        }
+
+        // Optional Python venv setup - uncomment if needed
+        /*
+        stage('Setup Python venv') {
+            steps {
+                bat '''
+                    python -m venv venv
+                    call venv\\Scripts\\activate
+                    python --version
+                '''
+            }
+        }
+        */
 
         stage('Setup Terraform') {
             steps {
