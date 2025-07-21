@@ -1,8 +1,9 @@
+//for win os
 pipeline {
     agent any
 
     environment {
-        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')       // set your Jenkins AWS credentials ID
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
         AWS_REGION = 'us-east-1'
     }
@@ -12,18 +13,17 @@ pipeline {
             steps {
                 git branch: 'main', 
                     url: 'https://github.com/raz-project/projectDev4.git', 
-                    credentialsId: 'github-raz'  // Your Jenkins GitHub credentials ID
+                    credentialsId: 'github-raz'
             }
         }
 
         stage('Setup Terraform') {
             steps {
-                // Install Terraform (for Ubuntu agents) - you might want a docker or pre-installed version
-                sh '''
-                    wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip
-                    unzip terraform_1.6.6_linux_amd64.zip
-                    sudo mv terraform /usr/local/bin/
-                    terraform version
+                bat '''
+                    curl -o terraform.zip https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_windows_amd64.zip
+                    powershell -Command "Expand-Archive -Path terraform.zip -DestinationPath . -Force"
+                    move terraform.exe C:\\Windows\\System32\\
+                    terraform --version
                 '''
             }
         }
@@ -31,7 +31,7 @@ pipeline {
         stage('Terraform Init & Apply - first-thing-before-start') {
             steps {
                 dir('first-thing-before-start') {
-                    sh '''
+                    bat '''
                         terraform init
                         terraform apply -auto-approve
                     '''
@@ -41,9 +41,9 @@ pipeline {
 
         stage('Run Python Script - tf-security-group') {
             steps {
-                dir('modules/tf-security-group') {
-                    sh '''
-                        python3 configrePolicy.py --sg-name git_rule --ingress-rules ssh,http,tcp
+                dir('modules\\tf-security-group') {
+                    bat '''
+                        python configrePolicy.py --sg-name git_rule --ingress-rules ssh,http,tcp
                     '''
                 }
             }
@@ -51,7 +51,7 @@ pipeline {
 
         stage('Terraform Init & Apply - root') {
             steps {
-                sh '''
+                bat '''
                     terraform init
                     terraform apply -auto-approve
                 '''
@@ -60,9 +60,9 @@ pipeline {
 
         stage('Run Python Script - uninstall SG') {
             steps {
-                dir('modules/tf-security-group') {
-                    sh '''
-                        python3 uninstallConfigure.py --sg-name git_rule --ingress-rules ssh,http,tcp
+                dir('modules\\tf-security-group') {
+                    bat '''
+                        python uninstallConfigure.py --sg-name git_rule --ingress-rules ssh,http,tcp
                     '''
                 }
             }
@@ -70,7 +70,7 @@ pipeline {
 
         stage('Terraform Destroy - root') {
             steps {
-                sh '''
+                bat '''
                     terraform destroy -auto-approve
                 '''
             }
@@ -79,7 +79,7 @@ pipeline {
         stage('Terraform Destroy - first-thing-before-start') {
             steps {
                 dir('first-thing-before-start') {
-                    sh '''
+                    bat '''
                         terraform destroy -auto-approve
                     '''
                 }
