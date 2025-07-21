@@ -20,20 +20,23 @@ pipeline {
             steps {
                 script {
                     powershell '''
-                        # Check if Python is already installed
                         $pythonInstalled = Get-Command python -ErrorAction SilentlyContinue
 
                         if (-Not $pythonInstalled) {
                             Write-Host "Python is not installed. Installing..."
-                            
-                            # Download the Python installer
-                            Invoke-WebRequest -Uri https://www.python.org/ftp/python/3.9.6/python-3.9.6.exe -OutFile python-installer.exe
 
-                            # Install Python silently with PATH added
-                            Start-Process -FilePath python-installer.exe -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1" -NoNewWindow -Wait
+                            $installerUrl = "https://www.python.org/ftp/python/3.9.6/python-3.9.6.exe"
+                            $installerPath = "$env:TEMP\\python-3.9.6.exe"
 
-                            # Clean up the installer
-                            Remove-Item python-installer.exe
+                            Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath
+
+                            Start-Process -FilePath $installerPath -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1" -Wait
+
+                            Remove-Item $installerPath
+
+                            # Manually add to PATH for current session (for Jenkins to find Python immediately)
+                            $pythonPath = "C:\\Program Files\\Python39"
+                            $env:Path += ";$pythonPath;$pythonPath\\Scripts"
                         } else {
                             Write-Host "Python is already installed."
                         }
@@ -46,6 +49,7 @@ pipeline {
             steps {
                 bat '''
                     echo Verifying Python installation...
+                    set PATH=C:\\Program Files\\Python39;C:\\Program Files\\Python39\\Scripts;%PATH%
                     where python
                     python --version
                 '''
@@ -77,7 +81,10 @@ pipeline {
         stage('Run Python Script - tf-security-group') {
             steps {
                 dir('modules\\tf-security-group') {
-                    bat 'configrePolicy.py --sg-name git_rule --ingress-rules ssh,http,tcp'
+                    bat '''
+                        set PATH=C:\\Program Files\\Python39;C:\\Program Files\\Python39\\Scripts;%PATH%
+                        configrePolicy.py --sg-name git_rule --ingress-rules ssh,http,tcp
+                    '''
                 }
             }
         }
@@ -94,7 +101,10 @@ pipeline {
         stage('Run Python Script - uninstall SG') {
             steps {
                 dir('modules\\tf-security-group') {
-                    bat 'uninstallConfigure.py --sg-name git_rule --ingress-rules ssh,http,tcp'
+                    bat '''
+                        set PATH=C:\\Program Files\\Python39;C:\\Program Files\\Python39\\Scripts;%PATH%
+                        uninstallConfigure.py --sg-name git_rule --ingress-rules ssh,http,tcp
+                    '''
                 }
             }
         }
