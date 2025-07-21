@@ -64,6 +64,10 @@ def main():
     print("✅ terraform.tfvars.json created")
     print(json.dumps(tfvars, indent=2))
 
+    # Run terraform init first to fix provider lock issue
+    subprocess.run(["terraform", "init"], check=True)
+
+    # Then apply terraform with the variables file
     subprocess.run(["terraform", "apply", "-var-file=terraform.tfvars.json"], check=True)
 
 if __name__ == "__main__":
