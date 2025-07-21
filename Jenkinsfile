@@ -1,23 +1,10 @@
 pipeline {
     agent any
 
-    environment {
-        // You can also set a default value here if needed
-        PYTHON_PATH = ''
-    }
-
     stages {
         stage('Checkout Code') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/raz-project/projectDev4.git'
-                        // Add credentials here if needed:
-                        // credentialsId: 'github-raz'
-                    ]]
-                ])
+                checkout scm
             }
         }
 
@@ -29,7 +16,15 @@ pipeline {
                         env.PYTHON_PATH = pyPath
                         echo "Python executable path set to: ${env.PYTHON_PATH}"
                     } else {
-                        error("Python executable not found at ${pyPath}")
+                        echo "Python executable not found at ${pyPath}, trying 'where python'..."
+                        def wherePython = bat(script: 'where python', returnStdout: true).trim()
+                        echo "Output of 'where python':\n${wherePython}"
+                        if (wherePython) {
+                            env.PYTHON_PATH = wherePython.split('\r\n')[0]
+                            echo "Using Python path from 'where python': ${env.PYTHON_PATH}"
+                        } else {
+                            error("Python executable could not be found.")
+                        }
                     }
                 }
             }
@@ -53,24 +48,11 @@ pipeline {
 
         stage('Setup Terraform') {
             steps {
-                echo "Setup Terraform stage running..."
-                // Add your terraform init/apply commands here
-                // For example:
-                // bat 'terraform init'
-                // bat 'terraform apply -auto-approve'
+                // Your terraform init/apply steps here
+                echo "Setup Terraform stage placeholder"
             }
         }
 
-        // Add other stages as needed...
-
-    }
-
-    post {
-        failure {
-            echo 'Pipeline failed. Check logs for details.'
-        }
-        success {
-            echo 'Pipeline completed successfully!'
-        }
+        // Add your other stages as needed
     }
 }
