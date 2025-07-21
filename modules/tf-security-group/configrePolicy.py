@@ -1,5 +1,6 @@
 import json
 import subprocess
+import argparse
 
 # Predefined rules
 port_presets = {
@@ -9,51 +10,38 @@ port_presets = {
     "tcp": {"from_port": 0, "to_port": 65535, "description": "All TCP traffic"},
 }
 
-def ask_user():
-    sg_name = input("Enter Security Group name (e.g. my-sg): ").strip()
-    if not sg_name:
-        print("Security Group name is required.")
-        exit(1)
+def parse_args():
+    parser = argparse.ArgumentParser(description="Generate terraform.tfvars.json from SG inputs.")
+    parser.add_argument("--sg-name", required=True, help="Security Group name (e.g. my-sg)")
+    parser.add_argument("--ingress-rules", required=True,
+                        help="Comma-separated list: ssh,http,tcp or custom:8080:8080:my-desc")
+    return parser.parse_args()
 
-    print("\nWhich inbound rules do you want to add?")
-    print("Options: ssh, http, https, tcp, custom")
-    print("Example: ssh,http,custom")
-    choices_input = input("Enter your choices: ")
-
-    if not choices_input.strip():
-        print("No options entered. Exiting.")
-        exit(1)
-
-    choices = [choice.strip().lower() for choice in choices_input.split(",")]
-
-    ingress_rules = []
-
-    for choice in choices:
-        if choice in port_presets:
-            ingress_rules.append(port_presets[choice])
-        elif choice == "custom":
-            while True:
-                try:
-                    from_port = int(input("Enter custom from_port: "))
-                    to_port = int(input("Enter custom to_port: "))
-                    desc = input("Enter description: ").strip()
-                    ingress_rules.append({
-                        "from_port": from_port,
-                        "to_port": to_port,
-                        "description": desc
-                    })
-                    more = input("Add another custom rule? (y/n): ").lower()
-                    if more != "y":
-                        break
-                except ValueError:
-                    print("Invalid input. Try again.")
+def build_ingress_rules(ingress_str):
+    rules = []
+    entries = ingress_str.split(",")
+    for entry in entries:
+        entry = entry.strip()
+        if entry in port_presets:
+            rules.append(port_presets[entry])
+        elif entry.startswith("custom:"):
+            try:
+                _, from_port, to_port, desc = entry.split(":", 3)
+                rules.append({
+                    "from_port": int(from_port),
+                    "to_port": int(to_port),
+                    "description": desc
+                })
+            except Exception as e:
+                print(f"Invalid custom rule: {entry} — {e}")
         else:
-            print(f"Unknown option '{choice}', skipping.")
-
-    return sg_name, ingress_rules
+            print(f"⚠️ Skipping unknown rule type: {entry}")
+    return rules
 
 def main():
-    sg_name, ingress_rules = ask_user()
+    args = parse_args()
+
+    ingress_rules = build_ingress_rules(args.ingress_rules)
 
     egress_rules = [{
         "from_port": 0,
@@ -62,7 +50,7 @@ def main():
     }]
 
     tfvars = {
-        "sg_name": sg_name,
+        "sg_name": args.sg_name,
         "ingress_rules": ingress_rules,
         "egress_rules": egress_rules,
         "allowed_cidrs": ["0.0.0.0/0"],
@@ -73,11 +61,10 @@ def main():
     with open("terraform.tfvars.json", "w") as f:
         json.dump(tfvars, f, indent=2)
 
-    print("\nterraform.tfvars.json generated:")
+    print("✅ terraform.tfvars.json created")
     print(json.dumps(tfvars, indent=2))
 
-    print("\nRunning: terraform apply -var-file=terraform.tfvars.json")
-    subprocess.run(["terraform", "apply", "-var-file=terraform.tfvars.json"])
+    subprocess.run(["terraform", "apply", "-var-file=terraform.tfvars.json"], check=True)
 
 if __name__ == "__main__":
     main()
