@@ -1,0 +1,42 @@
+name: Terraform Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  terraform-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          repository: raz-project/projectDev4
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Terraform Init & Apply - first-thing-before-start
+        working-directory: first-thing-before-start
+        run: |
+          terraform init
+          terraform apply -auto-approve
+
+      - name: Run Python Script - tf-security-group
+        working-directory: modules/tf-security-group
+        run: |
+          python3 configrePolicy.py
+
+      - name: Terraform Init & Apply - root
+        run: |
+          terraform init
+          terraform apply -auto-approve
+
+      - name: Terraform Destroy - root
+        run: |
+          terraform destroy -auto-approve
+
+      - name: Terraform Destroy - first-thing-before-start
+        working-directory: first-thing-before-start
+        run: |
+          terraform destroy -auto-approve
