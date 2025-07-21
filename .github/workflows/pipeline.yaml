@@ -16,6 +16,11 @@ jobs:
           repository: raz-project/projectDev4
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6  # Or latest version you want
+
       - name: Terraform Init & Apply - first-thing-before-start
         working-directory: first-thing-before-start
         run: |
