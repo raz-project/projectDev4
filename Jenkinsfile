@@ -16,16 +16,29 @@ pipeline {
             }
         }
 
-        stage('Install Python with Chocolatey') {
+        stage('Install Python') {
             steps {
-                bat '''
-                    echo Checking for Chocolatey...
-                    choco -v
-                    echo Installing Python if not present...
-                    choco install -y python --force
-                    refreshenv
-                    python --version
-                '''
+                script {
+                    powershell '''
+                        # Check if Python is already installed
+                        $pythonInstalled = Get-Command python -ErrorAction SilentlyContinue
+
+                        if (-Not $pythonInstalled) {
+                            Write-Host "Python is not installed. Installing..."
+                            
+                            # Download the Python installer
+                            Invoke-WebRequest -Uri https://www.python.org/ftp/python/3.9.6/python-3.9.6.exe -OutFile python-installer.exe
+
+                            # Install Python silently with PATH added
+                            Start-Process -FilePath python-installer.exe -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1" -NoNewWindow -Wait
+
+                            # Clean up the installer
+                            Remove-Item python-installer.exe
+                        } else {
+                            Write-Host "Python is already installed."
+                        }
+                    '''
+                }
             }
         }
 
@@ -38,19 +51,6 @@ pipeline {
                 '''
             }
         }
-
-        // Optional Python venv setup - uncomment if needed
-        /*
-        stage('Setup Python venv') {
-            steps {
-                bat '''
-                    python -m venv venv
-                    call venv\\Scripts\\activate
-                    python --version
-                '''
-            }
-        }
-        */
 
         stage('Setup Terraform') {
             steps {
@@ -77,9 +77,7 @@ pipeline {
         stage('Run Python Script - tf-security-group') {
             steps {
                 dir('modules\\tf-security-group') {
-                    bat '''
-                        python configrePolicy.py --sg-name git_rule --ingress-rules ssh,http,tcp
-                    '''
+                    bat 'configrePolicy.py --sg-name git_rule --ingress-rules ssh,http,tcp'
                 }
             }
         }
@@ -96,9 +94,7 @@ pipeline {
         stage('Run Python Script - uninstall SG') {
             steps {
                 dir('modules\\tf-security-group') {
-                    bat '''
-                        python uninstallConfigure.py --sg-name git_rule --ingress-rules ssh,http,tcp
-                    '''
+                    bat 'uninstallConfigure.py --sg-name git_rule --ingress-rules ssh,http,tcp'
                 }
             }
         }
