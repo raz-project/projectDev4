@@ -19,15 +19,14 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.6.6  # Or latest version you want
+          terraform_version: 1.6.6
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1  
-
+          aws-region: us-east-1
 
       - name: Terraform Init & Apply - first-thing-before-start
         working-directory: first-thing-before-start
@@ -44,6 +43,11 @@ jobs:
         run: |
           terraform init
           terraform apply -auto-approve
+
+      - name: Run Python Script - uninstall SG
+        working-directory: modules/tf-security-group
+        run: |
+          python3 uninstallConfigure.py --sg-name git_rule --ingress-rules ssh,http,tcp
 
       - name: Terraform Destroy - root
         run: |
