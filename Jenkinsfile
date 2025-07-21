@@ -2,30 +2,35 @@ pipeline {
     agent any
 
     environment {
-        PYTHON_PATH = ''  // will be set dynamically
+        // You can also set a default value here if needed
+        PYTHON_PATH = ''
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                checkout scm
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/raz-project/projectDev4.git'
+                        // Add credentials here if needed:
+                        // credentialsId: 'github-raz'
+                    ]]
+                ])
             }
         }
 
         stage('Install Python') {
             steps {
-                catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                    powershell '''
-                      Write-Host "Checking for Python executable..."
-                      $pyPath = "C:\\Program Files (x86)\\Python39-32\\python.exe"
-                      if (Test-Path $pyPath) {
-                        Write-Host "Python executable found at: $pyPath"
-                        Write-Host "##vso[task.setvariable variable=PYTHON_PATH]$pyPath"
-                      } else {
-                        Write-Error "Python executable not found at $pyPath"
-                        exit 1
-                      }
-                    '''
+                script {
+                    def pyPath = 'C:\\Program Files (x86)\\Python39-32\\python.exe'
+                    if (fileExists(pyPath)) {
+                        env.PYTHON_PATH = pyPath
+                        echo "Python executable path set to: ${env.PYTHON_PATH}"
+                    } else {
+                        error("Python executable not found at ${pyPath}")
+                    }
                 }
             }
         }
@@ -33,44 +38,39 @@ pipeline {
         stage('Check Python') {
             steps {
                 script {
-                    if (!env.PYTHON_PATH?.trim()) {
-                        error("PYTHON_PATH is not set. Aborting pipeline.")
+                    if (!env.PYTHON_PATH) {
+                        error("PYTHON_PATH environment variable is not set!")
                     }
-                    echo "Using Python at: ${env.PYTHON_PATH}"
+                    echo "Verifying Python installation at: ${env.PYTHON_PATH}"
                 }
-                bat '''
+                bat """
                     echo Verifying Python installation...
                     where python
-                    "%PYTHON_PATH%" --version || exit /b 1
-                '''
+                    "${env.PYTHON_PATH}" --version
+                """
             }
         }
 
         stage('Setup Terraform') {
             steps {
-                // Run terraform init
-                bat 'terraform init'
+                echo "Setup Terraform stage running..."
+                // Add your terraform init/apply commands here
+                // For example:
+                // bat 'terraform init'
+                // bat 'terraform apply -auto-approve'
             }
         }
 
-        stage('Terraform Apply') {
-            steps {
-                bat 'terraform apply -auto-approve'
-            }
-        }
+        // Add other stages as needed...
 
-        stage('Run Python Script - tf-security-group') {
-            steps {
-                dir('modules/tf-security-group') {
-                    bat '"%PYTHON_PATH%" configrePolicy.py --sg-name git_rule --ingress-rules ssh,http,tcp'
-                }
-            }
-        }
     }
 
     post {
         failure {
-            echo 'Build failed! Check logs for details.'
+            echo 'Pipeline failed. Check logs for details.'
+        }
+        success {
+            echo 'Pipeline completed successfully!'
         }
     }
 }
