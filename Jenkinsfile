@@ -5,13 +5,15 @@ pipeline {
         AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
         AWS_REGION = 'us-east-1'
-        PYTHON_PATH = ''  // will be set dynamically after install
+        // PYTHON_PATH will be set dynamically in Install Python stage
     }
 
     stages {
-        stage('Start') {
+        stage('Checkout Code') {
             steps {
-                bat 'echo Starting pipeline...'
+                git branch: 'main', 
+                    url: 'https://github.com/raz-project/projectDev4.git', 
+                    credentialsId: 'github-raz'
             }
         }
 
@@ -29,7 +31,6 @@ pipeline {
                             } else {
                                 Write-Host "Python is already installed."
                             }
-                            # Find installed python path
                             $pyPath = (Get-Command python).Path
                             Write-Host "Python executable path found at: $pyPath"
                             echo "##vso[task.setvariable variable=PYTHON_PATH]$pyPath"
@@ -41,14 +42,16 @@ pipeline {
 
         stage('Check Python') {
             steps {
-                script {
-                    // Use the Python path env var or fallback to 'python'
-                    def pythonExe = env.PYTHON_PATH ?: 'python'
-                    bat """
-                        echo Verifying Python installation...
-                        where ${pythonExe}
-                        ${pythonExe} --version
-                    """
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    script {
+                        def pythonExe = env.PYTHON_PATH ?: 'python'
+                        bat """
+                            echo Verifying Python installation...
+                            where ${pythonExe}
+                            "${pythonExe}" --version
+                            echo Python check completed with exit code %ERRORLEVEL%
+                        """
+                    }
                 }
             }
         }
@@ -80,7 +83,9 @@ pipeline {
                 dir('modules\\tf-security-group') {
                     script {
                         def pythonExe = env.PYTHON_PATH ?: 'python'
-                        bat "${pythonExe} configrePolicy.py --sg-name git_rule --ingress-rules ssh,http,tcp"
+                        bat """
+                            "${pythonExe}" configrePolicy.py --sg-name git_rule --ingress-rules ssh,http,tcp
+                        """
                     }
                 }
             }
@@ -100,7 +105,9 @@ pipeline {
                 dir('modules\\tf-security-group') {
                     script {
                         def pythonExe = env.PYTHON_PATH ?: 'python'
-                        bat "${pythonExe} uninstallConfigure.py --sg-name git_rule --ingress-rules ssh,http,tcp"
+                        bat """
+                            "${pythonExe}" uninstallConfigure.py --sg-name git_rule --ingress-rules ssh,http,tcp
+                        """
                     }
                 }
             }
