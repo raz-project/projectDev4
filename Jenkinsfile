@@ -5,7 +5,6 @@ pipeline {
         AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
         AWS_REGION = 'us-east-1'
-        // PYTHON_PATH will be set dynamically in Install Python stage
     }
 
     stages {
@@ -31,9 +30,10 @@ pipeline {
                             } else {
                                 Write-Host "Python is already installed."
                             }
-                            $pyPath = (Get-Command python).Path
+                            # Find python executable path
+                            $pyPath = (Get-Command python).Source
                             Write-Host "Python executable path found at: $pyPath"
-                            echo "##vso[task.setvariable variable=PYTHON_PATH]$pyPath"
+                            Write-Output "##vso[task.setvariable variable=PYTHON_PATH]$pyPath"
                         '''
                     }
                 }
@@ -42,16 +42,13 @@ pipeline {
 
         stage('Check Python') {
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    script {
-                        def pythonExe = env.PYTHON_PATH ?: 'python'
-                        bat """
-                            echo Verifying Python installation...
-                            where ${pythonExe}
-                            "${pythonExe}" --version
-                            echo Python check completed with exit code %ERRORLEVEL%
-                        """
-                    }
+                script {
+                    def pythonExe = env.PYTHON_PATH ?: 'python'
+                    bat """
+                        echo Verifying Python installation...
+                        where python
+                        ${pythonExe} --version
+                    """
                 }
             }
         }
@@ -83,9 +80,7 @@ pipeline {
                 dir('modules\\tf-security-group') {
                     script {
                         def pythonExe = env.PYTHON_PATH ?: 'python'
-                        bat """
-                            "${pythonExe}" configrePolicy.py --sg-name git_rule --ingress-rules ssh,http,tcp
-                        """
+                        bat "\"${pythonExe}\" configrePolicy.py --sg-name git_rule --ingress-rules ssh,http,tcp"
                     }
                 }
             }
@@ -93,21 +88,23 @@ pipeline {
 
         stage('Terraform Init & Apply - root') {
             steps {
-                bat '''
-                    terraform init
-                    terraform apply -auto-approve
-                '''
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    bat '''
+                        terraform init
+                        terraform apply -auto-approve
+                    '''
+                }
             }
         }
 
         stage('Run Python Script - uninstall SG') {
             steps {
-                dir('modules\\tf-security-group') {
-                    script {
-                        def pythonExe = env.PYTHON_PATH ?: 'python'
-                        bat """
-                            "${pythonExe}" uninstallConfigure.py --sg-name git_rule --ingress-rules ssh,http,tcp
-                        """
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    dir('modules\\tf-security-group') {
+                        script {
+                            def pythonExe = env.PYTHON_PATH ?: 'python'
+                            bat "\"${pythonExe}\" uninstallConfigure.py --sg-name git_rule --ingress-rules ssh,http,tcp"
+                        }
                     }
                 }
             }
@@ -115,18 +112,22 @@ pipeline {
 
         stage('Terraform Destroy - root') {
             steps {
-                bat '''
-                    terraform destroy -auto-approve
-                '''
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    bat '''
+                        terraform destroy -auto-approve
+                    '''
+                }
             }
         }
 
         stage('Terraform Destroy - first-thing-before-start') {
             steps {
-                dir('first-thing-before-start') {
-                    bat '''
-                        terraform destroy -auto-approve
-                    '''
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    dir('first-thing-before-start') {
+                        bat '''
+                            terraform destroy -auto-approve
+                        '''
+                    }
                 }
             }
         }

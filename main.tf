@@ -30,7 +30,7 @@ provider "aws" {
 
 module "tf-static" {
   source      = "./modules/tf-static-web"
-  bucket_name = "new-static-123"
+  bucket_name = "web-static-bucket-addres"
 }
 
 ####################################################
