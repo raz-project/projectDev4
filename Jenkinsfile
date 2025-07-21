@@ -5,13 +5,16 @@ pipeline {
         AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
         AWS_REGION = 'us-east-1'
+        PYTHON_PATH = 'C:\\Program Files (x86)\\Python39-32\\python.exe'  // <-- Python executable path
+        PYTHON_DIR = 'C:\\Program Files (x86)\\Python39-32'
+        PYTHON_SCRIPTS_DIR = 'C:\\Program Files (x86)\\Python39-32\\Scripts'
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', 
-                    url: 'https://github.com/raz-project/projectDev4.git', 
+                git branch: 'main',
+                    url: 'https://github.com/raz-project/projectDev4.git',
                     credentialsId: 'github-raz'
             }
         }
@@ -21,22 +24,13 @@ pipeline {
                 script {
                     powershell '''
                         $pythonInstalled = Get-Command python -ErrorAction SilentlyContinue
-
                         if (-Not $pythonInstalled) {
                             Write-Host "Python is not installed. Installing..."
-
                             $installerUrl = "https://www.python.org/ftp/python/3.9.6/python-3.9.6.exe"
                             $installerPath = "$env:TEMP\\python-3.9.6.exe"
-
                             Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath
-
                             Start-Process -FilePath $installerPath -ArgumentList "/quiet InstallAllUsers=1 PrependPath=1" -Wait
-
                             Remove-Item $installerPath
-
-                            # Manually add to PATH for current session (for Jenkins to find Python immediately)
-                            $pythonPath = "C:\\Program Files\\Python39"
-                            $env:Path += ";$pythonPath;$pythonPath\\Scripts"
                         } else {
                             Write-Host "Python is already installed."
                         }
@@ -49,9 +43,9 @@ pipeline {
             steps {
                 bat '''
                     echo Verifying Python installation...
-                    set PATH=C:\\Program Files\\Python39;C:\\Program Files\\Python39\\Scripts;%PATH%
+                    set PATH=%PYTHON_DIR%;%PYTHON_SCRIPTS_DIR%;%PATH%
                     where python
-                    python --version
+                    "%PYTHON_PATH%" --version
                 '''
             }
         }
@@ -82,8 +76,8 @@ pipeline {
             steps {
                 dir('modules\\tf-security-group') {
                     bat '''
-                        set PATH=C:\\Program Files\\Python39;C:\\Program Files\\Python39\\Scripts;%PATH%
-                        configrePolicy.py --sg-name git_rule --ingress-rules ssh,http,tcp
+                        set PATH=%PYTHON_DIR%;%PYTHON_SCRIPTS_DIR%;%PATH%
+                        "%PYTHON_PATH%" configrePolicy.py --sg-name git_rule --ingress-rules ssh,http,tcp
                     '''
                 }
             }
@@ -102,8 +96,8 @@ pipeline {
             steps {
                 dir('modules\\tf-security-group') {
                     bat '''
-                        set PATH=C:\\Program Files\\Python39;C:\\Program Files\\Python39\\Scripts;%PATH%
-                        uninstallConfigure.py --sg-name git_rule --ingress-rules ssh,http,tcp
+                        set PATH=%PYTHON_DIR%;%PYTHON_SCRIPTS_DIR%;%PATH%
+                        "%PYTHON_PATH%" uninstallConfigure.py --sg-name git_rule --ingress-rules ssh,http,tcp
                     '''
                 }
             }
