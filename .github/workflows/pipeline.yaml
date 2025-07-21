@@ -38,7 +38,7 @@ jobs:
       - name: Run Python Script - tf-security-group
         working-directory: modules/tf-security-group
         run: |
-          python3 configrePolicy.py
+          python3 configrePolicy.py --sg-name git_rule --ingress-rules ssh,http,tcp
 
       - name: Terraform Init & Apply - root
         run: |
