@@ -2,64 +2,88 @@ pipeline {
     agent any
 
     environment {
-        // Initialize PYTHON_PATH as empty, will be set in the pipeline
-        PYTHON_PATH = ''
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')       // set your Jenkins AWS credentials ID
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
+        AWS_REGION = 'us-east-1'
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                checkout scm
-            }
-        }
-
-        stage('Install Python') {
-            steps {
-                script {
-                    // Capture the full path to python.exe
-                    def pythonPath = bat(script: 'where python', returnStdout: true).trim()
-                    if (!pythonPath) {
-                        error 'Python executable not found on PATH!'
-                    }
-                    echo "Python executable path found at: ${pythonPath}"
-                    env.PYTHON_PATH = pythonPath
-                }
-            }
-        }
-
-        stage('Check Python') {
-            steps {
-                script {
-                    if (!env.PYTHON_PATH) {
-                        error 'PYTHON_PATH environment variable not set!'
-                    }
-                    // Run python --version using the full path
-                    bat "\"${env.PYTHON_PATH}\" --version"
-                }
+                git branch: 'main', 
+                    url: 'https://github.com/raz-project/projectDev4.git', 
+                    credentialsId: 'github-raz'  // Your Jenkins GitHub credentials ID
             }
         }
 
         stage('Setup Terraform') {
             steps {
-                echo 'Terraform setup steps go here.'
-                // Add your terraform init commands
-                // Example: bat 'terraform init'
+                // Install Terraform (for Ubuntu agents) - you might want a docker or pre-installed version
+                sh '''
+                    wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip
+                    unzip terraform_1.6.6_linux_amd64.zip
+                    sudo mv terraform /usr/local/bin/
+                    terraform version
+                '''
             }
         }
 
-        stage('Terraform Apply') {
+        stage('Terraform Init & Apply - first-thing-before-start') {
             steps {
-                echo 'Terraform apply steps go here.'
-                // Add your terraform apply commands
-                // Example: bat 'terraform apply -auto-approve'
+                dir('first-thing-before-start') {
+                    sh '''
+                        terraform init
+                        terraform apply -auto-approve
+                    '''
+                }
             }
         }
-    }
 
-    post {
-        failure {
-            echo 'Build failed, skipping remaining stages.'
+        stage('Run Python Script - tf-security-group') {
+            steps {
+                dir('modules/tf-security-group') {
+                    sh '''
+                        python3 configrePolicy.py --sg-name git_rule --ingress-rules ssh,http,tcp
+                    '''
+                }
+            }
+        }
+
+        stage('Terraform Init & Apply - root') {
+            steps {
+                sh '''
+                    terraform init
+                    terraform apply -auto-approve
+                '''
+            }
+        }
+
+        stage('Run Python Script - uninstall SG') {
+            steps {
+                dir('modules/tf-security-group') {
+                    sh '''
+                        python3 uninstallConfigure.py --sg-name git_rule --ingress-rules ssh,http,tcp
+                    '''
+                }
+            }
+        }
+
+        stage('Terraform Destroy - root') {
+            steps {
+                sh '''
+                    terraform destroy -auto-approve
+                '''
+            }
+        }
+
+        stage('Terraform Destroy - first-thing-before-start') {
+            steps {
+                dir('first-thing-before-start') {
+                    sh '''
+                        terraform destroy -auto-approve
+                    '''
+                }
+            }
         }
     }
 }
-
