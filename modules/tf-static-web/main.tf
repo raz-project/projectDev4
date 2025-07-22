@@ -6,6 +6,7 @@ provider "aws" {
   region = "us-east-1"
 }
 
+
 ####################################################
 # S3 Bucket Resource
 # - Creates S3 bucket for hosting static website
@@ -23,10 +24,10 @@ resource "aws_s3_bucket" "my_bucket" {
 resource "aws_s3_bucket_public_access_block" "my_bucket_public_access_block" {
   bucket = aws_s3_bucket.my_bucket.id
 
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
+  block_public_acls       = false # Allow public ACLs (Optional)
+  block_public_policy     = false # Allow public policies
+  ignore_public_acls      = false # Don't ignore public ACLs
+  restrict_public_buckets = false # Don't restrict public buckets
 }
 
 ####################################################
@@ -66,8 +67,6 @@ resource "aws_s3_bucket_policy" "public_read" {
       }
     ]
   })
-
-  depends_on = [aws_s3_bucket_public_access_block.my_bucket_public_access_block]
 }
 
 ####################################################
