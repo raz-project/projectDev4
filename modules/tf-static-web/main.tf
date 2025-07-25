@@ -29,22 +29,6 @@ resource "aws_s3_bucket_public_access_block" "my_bucket_public_access_block" {
   ignore_public_acls      = false   # Don't ignore public ACLs
   restrict_public_buckets = false   # Don't restrict public buckets
 }
-####################################################
-# S3 Bucket Website Configuration
-# - Enables static website hosting on the bucket
-# - Defines index and error documents
-####################################################
-resource "aws_s3_bucket_website_configuration" "my_website" {
-  bucket = aws_s3_bucket.my_bucket.bucket
-
-  index_document {
-    suffix = "index.html"
-  }
-
-  error_document {
-    key = "error.html"
-  }
-}
 
 ####################################################
 # S3 Bucket Policy
@@ -67,6 +51,24 @@ resource "aws_s3_bucket_policy" "public_read" {
     ]
   })
 }
+
+####################################################
+# S3 Bucket Website Configuration
+# - Enables static website hosting on the bucket
+# - Defines index and error documents
+####################################################
+resource "aws_s3_bucket_website_configuration" "my_website" {
+  bucket = aws_s3_bucket.my_bucket.bucket
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "error.html"
+  }
+}
+
 
 ####################################################
 # Static Website Files Upload
