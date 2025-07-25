@@ -38,11 +38,11 @@ resource "aws_s3_bucket_website_configuration" "my_website" {
   bucket = aws_s3_bucket.my_bucket.bucket
 
   index_document {
-    suffix = "index.html"
+    suffix = "index.html"  # Default page for static website
   }
 
   error_document {
-    key = "error.html"
+    key = "error.html"  # Custom error page
   }
 }
 
@@ -68,17 +68,6 @@ resource "aws_s3_bucket_policy" "public_read" {
   })
 }
 
-resource "aws_s3_bucket_website_configuration" "my_website" {
-  bucket = aws_s3_bucket.my_bucket.bucket
-
-  index_document {
-    suffix = "index.html"  # Default page for static website
-  }
-
-  error_document {
-    key = "error.html"  # Custom error page
-  }
-}
 
 
 ####################################################
