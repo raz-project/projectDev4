@@ -24,12 +24,11 @@ resource "aws_s3_bucket" "my_bucket" {
 resource "aws_s3_bucket_public_access_block" "my_bucket_public_access_block" {
   bucket = aws_s3_bucket.my_bucket.id
 
-  block_public_acls       = false # Allow public ACLs (Optional)
-  block_public_policy     = false # Allow public policies
-  ignore_public_acls      = false # Don't ignore public ACLs
-  restrict_public_buckets = false # Don't restrict public buckets
+  block_public_acls       = false   # Allow public ACLs (Optional, for other public access methods)
+  block_public_policy     = false   # Allow public policies
+  ignore_public_acls      = false   # Don't ignore public ACLs
+  restrict_public_buckets = false   # Don't restrict public buckets
 }
-
 ####################################################
 # S3 Bucket Website Configuration
 # - Enables static website hosting on the bucket
@@ -61,13 +60,26 @@ resource "aws_s3_bucket_policy" "public_read" {
       {
         Sid       = "PublicReadGetObject"
         Effect    = "Allow"
-        Principal = "*"
+        Principal = "*"  # This allows access for anyone
         Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.my_bucket.arn}/*"
+        Resource  = "${aws_s3_bucket.my_bucket.arn}/*"  # Grants access to all objects in the bucket
       }
     ]
   })
 }
+
+resource "aws_s3_bucket_website_configuration" "my_website" {
+  bucket = aws_s3_bucket.my_bucket.bucket
+
+  index_document {
+    suffix = "index.html"  # Default page for static website
+  }
+
+  error_document {
+    key = "error.html"  # Custom error page
+  }
+}
+
 
 ####################################################
 # Static Website Files Upload
@@ -76,27 +88,27 @@ resource "aws_s3_bucket_policy" "public_read" {
 resource "aws_s3_object" "index" {
   bucket       = aws_s3_bucket.my_bucket.bucket
   key          = "index.html"
-  source       = "${path.module}/index.html"
+  source       = "${path.module}/index.html"  # Ensure this file exists
   content_type = "text/html"
 }
 
 resource "aws_s3_object" "error" {
   bucket       = aws_s3_bucket.my_bucket.bucket
   key          = "error.html"
-  source       = "${path.module}/error.html"
+  source       = "${path.module}/error.html"  # Ensure this file exists
   content_type = "text/html"
 }
 
 resource "aws_s3_object" "css" {
   bucket       = aws_s3_bucket.my_bucket.bucket
   key          = "styles.css"
-  source       = "${path.module}/styles.css"
+  source       = "${path.module}/styles.css"  # Ensure this file exists
   content_type = "text/css"
 }
 
 resource "aws_s3_object" "js" {
   bucket       = aws_s3_bucket.my_bucket.bucket
   key          = "script.js"
-  source       = "${path.module}/script.js"
+  source       = "${path.module}/script.js"  # Ensure this file exists
   content_type = "application/javascript"
 }
