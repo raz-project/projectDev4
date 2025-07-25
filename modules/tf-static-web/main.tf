@@ -38,11 +38,11 @@ resource "aws_s3_bucket_website_configuration" "my_website" {
   bucket = aws_s3_bucket.my_bucket.bucket
 
   index_document {
-    suffix = "index.html"  # Default page for static website
+    suffix = "index.html"
   }
 
   error_document {
-    key = "error.html"  # Custom error page
+    key = "error.html"
   }
 }
 
@@ -60,15 +60,13 @@ resource "aws_s3_bucket_policy" "public_read" {
       {
         Sid       = "PublicReadGetObject"
         Effect    = "Allow"
-        Principal = "*"  # This allows access for anyone
+        Principal = "*"
         Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.my_bucket.arn}/*"  # Grants access to all objects in the bucket
+        Resource  = "${aws_s3_bucket.my_bucket.arn}/*"
       }
     ]
   })
 }
-
-
 
 ####################################################
 # Static Website Files Upload
