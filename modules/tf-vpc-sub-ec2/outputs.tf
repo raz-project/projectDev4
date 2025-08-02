@@ -23,7 +23,7 @@ output "route_table_id" {
   value       = aws_route_table.dev_route.id
 }
 
-output "ec2_public_ips" {
+output "ec2_public_ips_vpc" {
   description = "Public IPs of EC2 instances in both subnets"
   value = {
     us_east_1a = aws_instance.ubuntu_instance_1_vpc.public_ip
