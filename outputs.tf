@@ -128,7 +128,7 @@ output "route_table_id" {
 
 output "ec2_public_ips_vpc" {
   description = "Public IPs of EC2 instances in both subnets"
-  value       = module.tf-vpc-sub-ec2.ec2_public_ips
+  value       = module.tf-vpc-sub-ec2.ec2_public_ips_vpc
 }
 
 output "private_key_path" {
