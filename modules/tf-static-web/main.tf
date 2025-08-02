@@ -24,10 +24,10 @@ resource "aws_s3_bucket" "my_bucket" {
 resource "aws_s3_bucket_public_access_block" "my_bucket_public_access_block" {
   bucket = aws_s3_bucket.my_bucket.id
 
-  block_public_acls       = false   # Allow public ACLs (Optional, for other public access methods)
-  block_public_policy     = false   # Allow public policies
-  ignore_public_acls      = false   # Don't ignore public ACLs
-  restrict_public_buckets = false   # Don't restrict public buckets
+  block_public_acls       = false # Allow public ACLs (Optional, for other public access methods)
+  block_public_policy     = false # Allow public policies
+  ignore_public_acls      = false # Don't ignore public ACLs
+  restrict_public_buckets = false # Don't restrict public buckets
 }
 
 ####################################################
@@ -42,10 +42,9 @@ resource "aws_s3_bucket_policy" "public_read" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "PublicReadGetObject"
         Effect    = "Allow"
         Principal = "*"
-        Action    = "s3:GetObject"
+        Action    = "s3:Get*"
         Resource  = "${aws_s3_bucket.my_bucket.arn}/*"
       }
     ]
@@ -77,27 +76,27 @@ resource "aws_s3_bucket_website_configuration" "my_website" {
 resource "aws_s3_object" "index" {
   bucket       = aws_s3_bucket.my_bucket.bucket
   key          = "index.html"
-  source       = "${path.module}/index.html"  # Ensure this file exists
+  source       = "${path.module}/index.html" # Ensure this file exists
   content_type = "text/html"
 }
 
 resource "aws_s3_object" "error" {
   bucket       = aws_s3_bucket.my_bucket.bucket
   key          = "error.html"
-  source       = "${path.module}/error.html"  # Ensure this file exists
+  source       = "${path.module}/error.html" # Ensure this file exists
   content_type = "text/html"
 }
 
 resource "aws_s3_object" "css" {
   bucket       = aws_s3_bucket.my_bucket.bucket
   key          = "styles.css"
-  source       = "${path.module}/styles.css"  # Ensure this file exists
+  source       = "${path.module}/styles.css" # Ensure this file exists
   content_type = "text/css"
 }
 
 resource "aws_s3_object" "js" {
   bucket       = aws_s3_bucket.my_bucket.bucket
   key          = "script.js"
-  source       = "${path.module}/script.js"  # Ensure this file exists
+  source       = "${path.module}/script.js" # Ensure this file exists
   content_type = "application/javascript"
 }
