@@ -59,6 +59,30 @@ module "tf-ecr" {
   instance_name_tag = "my_custom_server"
 }
 
+
+####################################################
+# VPC with EC2 Instances, Subnets, and Routing Module
+# - Creates a VPC with two subnets in different availability zones
+# - Creates an Internet Gateway (IGW) and attaches it to the VPC
+# - Creates a route table and associates it with the subnets
+# - Launches EC2 instances in both subnets with SSH access using PEM key generated via TLS
+# - Outputs VPC, subnet IDs, EC2 instance IPs, and other useful information
+####################################################
+
+module "tf-vpc-sub-ec2" {
+  source            = "./modules/tf-vpc-sub-ec2"
+  key_name          = "project_dev_vpc"          # Example value for SSH Key
+  instance_count    = 2                          # Example value for instance count
+  ami               = "ami-020cba7c55df1f615"    # Example value for the AMI
+  instance_name_tag = "raz_vpc-sub-ec2-instance" # Example value for instance name tag
+  vpc_name          = "dev-vpc"                  # Example VPC name
+  subnet1_cidr      = "10.0.0.0/24"              # Example subnet CIDR for subnet 1
+  subnet2_cidr      = "10.0.1.0/24"              # Example subnet CIDR for subnet 2
+  region            = "us-east-1"                # Example region
+  igw_name          = "Dev-IGW"                  # Example IGW name
+  route_table_name  = "dev-route"                # Example route table name
+}
+
 ####################################################
 # Reminder: Custom Security Group Policy
 # - Local script hint to configure additional SG settings

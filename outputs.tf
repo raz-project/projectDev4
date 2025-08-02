@@ -95,3 +95,57 @@ output "ssh_private_key_path" {
   description = "Path to the PEM file containing the private SSH key"
   value       = module.tf-ecr.ssh_private_key_path
 }
+
+####################################################
+# VPC with EC2 Instances, Subnets, and Routing Outputs (tf-vpc-sub-ec2)
+# - Outputs related to the VPC, subnets, route table, and EC2 instances in the custom VPC
+####################################################
+
+output "vpc_id" {
+  description = "The ID of the created VPC"
+  value       = module.tf-vpc-sub-ec2.vpc_id
+}
+
+output "subnet1_id" {
+  description = "The ID of subnet 1"
+  value       = module.tf-vpc-sub-ec2.subnet1_id
+}
+
+output "subnet2_id" {
+  description = "The ID of subnet 2"
+  value       = module.tf-vpc-sub-ec2.subnet2_id
+}
+
+output "internet_gateway_id" {
+  description = "The ID of the Internet Gateway"
+  value       = module.tf-vpc-sub-ec2.internet_gateway_id
+}
+
+output "route_table_id" {
+  description = "The ID of the Route Table"
+  value       = module.tf-vpc-sub-ec2.route_table_id
+}
+
+output "ec2_public_ips" {
+  description = "Public IPs of EC2 instances in both subnets"
+  value = {
+    us_east_1a = module.tf-vpc-sub-ec2.ec2_public_ips.us_east_1a
+    us_east_1b = module.tf-vpc-sub-ec2.ec2_public_ips.us_east_1b
+  }
+}
+
+output "private_key_path" {
+  description = "Path to the generated private key file"
+  value       = module.tf-vpc-sub-ec2.private_key_path
+}
+
+output "igw_name" {
+  description = "The name of the Internet Gateway"
+  value       = module.tf-vpc-sub-ec2.igw_name
+}
+
+output "route_table_name" {
+  description = "The name of the Route Table"
+  value       = module.tf-vpc-sub-ec2.route_table_name
+}
+
